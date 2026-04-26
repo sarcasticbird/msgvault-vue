@@ -9,7 +9,7 @@ export default defineConfig({
   server: {
     host: true,
     port: 3000,
-    allowedHosts: ['.ts.net', 'localhost', '127.0.0.1'],
+    allowedHosts: ['.ts.net', '.local', 'localhost', '127.0.0.1', 'rack-mini'],
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
