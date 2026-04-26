@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
+import { useTheme } from './composables/useTheme'
+import { useKeyboard } from './composables/useKeyboard'
+import HelpOverlay from './components/HelpOverlay.vue'
 
 const route = useRoute()
+const { themeIcon, toggleTheme } = useTheme()
+const { helpVisible } = useKeyboard()
 </script>
 
 <template>
@@ -14,6 +19,9 @@ const route = useRoute()
           <router-link to="/browse" :class="{ active: route.name === 'browse' }">Browse</router-link>
           <router-link to="/search" :class="{ active: route.name === 'search' }">Search</router-link>
         </nav>
+        <button id="theme-toggle" class="theme-toggle" title="Toggle dark mode" @click="toggleTheme">
+          {{ themeIcon }}
+        </button>
       </div>
     </header>
     <router-view />
@@ -21,5 +29,6 @@ const route = useRoute()
       msgvault
       <span style="margin-left: 8px; opacity: 0.6;"><kbd>?</kbd> shortcuts</span>
     </footer>
+    <HelpOverlay v-if="helpVisible" @close="helpVisible = false" />
   </div>
 </template>
