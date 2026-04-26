@@ -8,7 +8,7 @@ Standalone Vue 3 frontend for [msgvault](https://github.com/wesm/msgvault).
 
 ## Why This Project
 
-This is a 1:1 port of msgvault's embedded templ+HTMX web UI into an independent SPA that talks to the `/api/v1` REST API. The original web UI is tightly coupled to the Go binary (embedded templates, direct query engine access). This project decouples the frontend so it can evolve independently, run on different hosts, and eventually replace the embedded UI.
+A browser-based GUI for msgvault. It talks to the `/api/v1` REST API and can run on any host — your laptop, a NAS, wherever the msgvault server is running. Built as a standalone SPA so it can evolve independently from the Go backend.
 
 ## Stack
 
