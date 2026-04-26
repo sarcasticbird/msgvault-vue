@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api, type MessageDetail } from '../api/client'
 import { formatBytes } from '../utils/format'
@@ -15,18 +15,30 @@ const error = ref('')
 const messageId = computed(() => Number(route.params.id))
 const nav = computed(() => getNavigation(messageId.value))
 
-onMounted(async () => {
+watch(() => route.params.id, async (id) => {
+  msg.value = null
+  error.value = ''
   try {
-    msg.value = await api.getMessage(messageId.value)
+    msg.value = await api.getMessage(Number(id))
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : String(e)
   }
-})
+}, { immediate: true })
 
 function onIframeMessage(e: MessageEvent) {
-  if (e.data?.type === 'resize') {
-    const frame = document.querySelector('.msg-body-frame') as HTMLIFrameElement
-    if (frame) frame.style.height = e.data.height + 'px'
+  const frame = document.querySelector('.msg-body-frame') as HTMLIFrameElement
+  if (!frame || e.source !== frame.contentWindow) return
+  const h = Number(e.data?.height)
+  if (e.data?.type === 'resize' && Number.isFinite(h) && h >= 0) {
+    frame.style.height = h + 'px'
+  }
+}
+
+function goBack() {
+  if (window.history.state?.back) {
+    router.back()
+  } else {
+    router.push('/messages')
   }
 }
 
@@ -46,7 +58,7 @@ onUnmounted(() => window.removeEventListener('message', onIframeMessage))
 
   <template v-else>
     <nav class="breadcrumb">
-      <a href="#" @click.prevent="router.back()">&larr; Back to messages</a>
+      <a href="#" @click.prevent="goBack()">&larr; Back to messages</a>
       <span v-if="nav.total > 0" class="msg-nav">
         <router-link v-if="nav.prev" :to="`/messages/${nav.prev}`" id="msg-prev" class="msg-nav-link">
           &larr; Prev
@@ -105,7 +117,7 @@ onUnmounted(() => window.removeEventListener('message', onIframeMessage))
 
     <div class="card">
       <iframe
-        sandbox="allow-same-origin allow-scripts"
+        sandbox="allow-scripts"
         :src="`/messages/${msg.id}/html`"
         class="msg-body-frame"
         frameborder="0"

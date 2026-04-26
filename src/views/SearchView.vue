@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api, type MessageSummary, type TotalStats } from '../api/client'
 import { formatCount } from '../utils/format'
@@ -56,7 +56,10 @@ function goPage(p: number) {
   updateQuery({ page: p > 1 ? String(p) : undefined })
 }
 
+let fetchId = 0
+
 async function fetchData() {
+  const currentFetchId = ++fetchId
   if (!query.value) {
     loading.value = true
     try {
@@ -65,13 +68,21 @@ async function fetchData() {
         direction: 'desc',
         limit: '100',
       })
+      if (currentFetchId !== fetchId) return
       messages.value = res.messages
       hasMore.value = false
 
       const statsRes = await api.getStats()
+      if (currentFetchId !== fetchId) return
       stats.value = statsRes
-    } catch { messages.value = [] }
-    finally { loading.value = false }
+    } catch {
+      if (currentFetchId !== fetchId) return
+      messages.value = []
+    } finally {
+      if (currentFetchId === fetchId) {
+        loading.value = false
+      }
+    }
     return
   }
 
@@ -90,25 +101,35 @@ async function fetchData() {
 
     if (mode.value === 'deep') {
       const res = await api.searchDeep(params)
+      if (currentFetchId !== fetchId) return
       messages.value = res.messages
       hasMore.value = res.has_more
     } else {
       const res = await api.searchFast(params)
-      messages.value = res.messages
+      if (currentFetchId !== fetchId) return
+      // Fast search: use length > pageSize as hasMore sentinel
+      const allMessages = res.messages
+      hasMore.value = allMessages.length > pageSize
+      messages.value = hasMore.value ? allMessages.slice(0, pageSize) : allMessages
       stats.value = res.stats ?? null
-      hasMore.value = messages.value.length > pageSize
-      if (hasMore.value) messages.value = messages.value.slice(0, pageSize)
     }
 
     if (!stats.value) {
-      stats.value = await api.getStats()
+      const statsRes = await api.getStats()
+      if (currentFetchId !== fetchId) return
+      stats.value = statsRes
     }
-  } catch { messages.value = [] }
-  finally { loading.value = false }
+  } catch {
+    if (currentFetchId !== fetchId) return
+    messages.value = []
+  } finally {
+    if (currentFetchId === fetchId) {
+      loading.value = false
+    }
+  }
 }
 
-watch(() => route.query, fetchData, { deep: true })
-onMounted(fetchData)
+watch(() => route.query, fetchData, { deep: true, immediate: true })
 </script>
 
 <template>

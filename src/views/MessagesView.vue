@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api, type MessageSummary } from '../api/client'
 import { formatCount } from '../utils/format'
@@ -57,7 +57,10 @@ function goPage(p: number) {
   updateQuery({ page: p > 1 ? String(p) : undefined })
 }
 
+let fetchId = 0
+
 async function fetchData() {
+  const currentFetchId = ++fetchId
   loading.value = true
   try {
     const params: Record<string, string> = {
@@ -76,19 +79,22 @@ async function fetchData() {
     if (route.query.hide_deleted === '1') params.hide_deleted = 'true'
 
     const res = await api.getFilteredMessages(params)
+    if (currentFetchId !== fetchId) return
     hasMore.value = res.has_more
     messages.value = res.messages
 
     storeMessageList(messages.value.map(m => m.id))
   } catch {
+    if (currentFetchId !== fetchId) return
     messages.value = []
   } finally {
-    loading.value = false
+    if (currentFetchId === fetchId) {
+      loading.value = false
+    }
   }
 }
 
-watch(() => route.query, fetchData, { deep: true })
-onMounted(fetchData)
+watch(() => route.query, fetchData, { deep: true, immediate: true })
 </script>
 
 <template>

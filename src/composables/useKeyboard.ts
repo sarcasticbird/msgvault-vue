@@ -98,7 +98,11 @@ export function useKeyboard() {
         break
       case 'Backspace':
         e.preventDefault()
-        router.back()
+        if (window.history.state?.back) {
+          router.back()
+        } else {
+          router.push('/')
+        }
         break
       case 'n': {
         const next = document.querySelector('.pagination a:last-of-type') as HTMLAnchorElement

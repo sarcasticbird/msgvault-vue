@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api, type AggregateRow, type TotalStats } from '../api/client'
 import { formatCount, formatBytes } from '../utils/format'
@@ -109,7 +109,10 @@ function sortIndicator(field: string): string {
   return sortDir.value === 'asc' ? ' \u2191' : ' \u2193'
 }
 
+let fetchId = 0
+
 async function fetchData() {
+  const currentFetchId = ++fetchId
   loading.value = true
   try {
     const params: Record<string, string> = {
@@ -131,17 +134,20 @@ async function fetchData() {
       isDrill.value ? api.getSubAggregates(params) : api.getAggregates(params),
       api.getStats(),
     ])
+    if (currentFetchId !== fetchId) return
     rows.value = aggRes.rows
     stats.value = statsRes
   } catch (e) {
+    if (currentFetchId !== fetchId) return
     rows.value = []
   } finally {
-    loading.value = false
+    if (currentFetchId === fetchId) {
+      loading.value = false
+    }
   }
 }
 
-watch(() => route.query, fetchData, { deep: true })
-onMounted(fetchData)
+watch(() => route.query, fetchData, { deep: true, immediate: true })
 </script>
 
 <template>

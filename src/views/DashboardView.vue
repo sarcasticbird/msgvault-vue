@@ -1,34 +1,50 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { api, type TotalStats, type AccountInfo } from '../api/client'
 import { formatCount, formatBytes, formatSyncTime } from '../utils/format'
 import StatsBar from '../components/StatsBar.vue'
 
 const stats = ref<TotalStats | null>(null)
 const accounts = ref<AccountInfo[]>([])
-const syncingAccounts = ref<Set<string>>(new Set())
+const syncingAccounts = reactive(new Set<string>())
 const error = ref('')
+const activePolls = new Map<string, ReturnType<typeof setInterval>>()
 
 onMounted(async () => {
-  try {
-    const [statsRes, accountsRes] = await Promise.all([
-      api.getStats(),
-      api.getAccounts(),
-    ])
-    stats.value = statsRes
-    accounts.value = accountsRes.accounts
-  } catch (e: any) {
-    error.value = e.message
+  const [statsResult, accountsResult] = await Promise.allSettled([
+    api.getStats(),
+    api.getAccounts(),
+  ])
+  if (statsResult.status === 'fulfilled') {
+    stats.value = statsResult.value
+  }
+  if (accountsResult.status === 'fulfilled') {
+    accounts.value = accountsResult.value.accounts
+  }
+  const errors = [statsResult, accountsResult]
+    .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+    .map(r => r.reason instanceof Error ? r.reason.message : String(r.reason))
+  if (errors.length > 0) {
+    error.value = errors.join('; ')
   }
 })
 
+onUnmounted(() => {
+  for (const poll of activePolls.values()) {
+    clearInterval(poll)
+  }
+  activePolls.clear()
+})
+
 async function triggerSync(email: string) {
-  syncingAccounts.value.add(email)
+  if (syncingAccounts.has(email)) return
+  syncingAccounts.add(email)
   try {
     await api.triggerSync(email)
     pollSync(email)
-  } catch (e: any) {
-    syncingAccounts.value.delete(email)
+  } catch (e: unknown) {
+    error.value = e instanceof Error ? e.message : String(e)
+    syncingAccounts.delete(email)
   }
 }
 
@@ -39,15 +55,18 @@ async function pollSync(email: string) {
       const acct = status.accounts.find(a => a.email === email)
       if (!acct || !acct.running) {
         clearInterval(poll)
-        syncingAccounts.value.delete(email)
+        activePolls.delete(email)
+        syncingAccounts.delete(email)
         const accountsRes = await api.getAccounts()
         accounts.value = accountsRes.accounts
       }
     } catch {
       clearInterval(poll)
-      syncingAccounts.value.delete(email)
+      activePolls.delete(email)
+      syncingAccounts.delete(email)
     }
   }, 2000)
+  activePolls.set(email, poll)
 }
 </script>
 

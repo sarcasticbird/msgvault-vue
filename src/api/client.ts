@@ -96,6 +96,7 @@ export interface SchedulerAccountStatus {
   last_run: string
   next_run: string
   last_error?: string
+  schedule: string
 }
 
 export interface ApiClient {
