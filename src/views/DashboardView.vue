@@ -9,6 +9,7 @@ const accounts = ref<AccountInfo[]>([])
 const syncingAccounts = reactive(new Set<string>())
 const error = ref('')
 const activePolls = new Map<string, ReturnType<typeof setInterval>>()
+let disposed = false
 
 onMounted(async () => {
   const [statsResult, accountsResult] = await Promise.allSettled([
@@ -30,6 +31,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  disposed = true
   for (const poll of activePolls.values()) {
     clearInterval(poll)
   }
@@ -41,8 +43,9 @@ async function triggerSync(email: string) {
   syncingAccounts.add(email)
   try {
     await api.triggerSync(email)
-    pollSync(email)
+    if (!disposed) pollSync(email)
   } catch (e: unknown) {
+    if (disposed) return
     error.value = e instanceof Error ? e.message : String(e)
     syncingAccounts.delete(email)
   }

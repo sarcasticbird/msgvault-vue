@@ -12,6 +12,13 @@ const router = useRouter()
 const stats = ref<TotalStats | null>(null)
 const rows = ref<AggregateRow[]>([])
 const loading = ref(true)
+const error = ref('')
+
+function qstr(key: string, fallback: string): string {
+  const v = route.query[key]
+  if (Array.isArray(v)) return String(v[0] ?? fallback)
+  return v != null ? String(v) : fallback
+}
 
 const viewTypes = [
   { label: 'Senders', value: 'senders' },
@@ -29,11 +36,11 @@ const granularities = [
   { label: 'Day', value: 'day' },
 ]
 
-const viewType = computed(() => (route.query.view as string) || 'senders')
-const sortField = computed(() => (route.query.sort as string) || 'count')
-const sortDir = computed(() => (route.query.dir as string) || 'desc')
-const granularity = computed(() => (route.query.granularity as string) || 'year')
-const accountId = computed(() => (route.query.account as string) || '')
+const viewType = computed(() => qstr('view', 'senders'))
+const sortField = computed(() => qstr('sort', 'count'))
+const sortDir = computed(() => qstr('dir', 'desc'))
+const granularity = computed(() => qstr('granularity', 'year'))
+const accountId = computed(() => qstr('account', ''))
 const attachments = computed(() => route.query.attachments === '1')
 const hideDeleted = computed(() => route.query.hide_deleted === '1')
 
@@ -41,7 +48,7 @@ const drillFilters = computed(() => {
   const keys = ['sender', 'sender_name', 'recipient', 'recipient_name', 'domain', 'label', 'time_period']
   const filters: Record<string, string> = {}
   for (const k of keys) {
-    if (route.query[k] !== undefined) filters[k] = (route.query[k] as string) ?? ''
+    if (route.query[k] != null) filters[k] = qstr(k, '')
   }
   return filters
 })
@@ -130,15 +137,15 @@ async function fetchData() {
       params[k] = v
     }
 
-    const [aggRes, statsRes] = await Promise.all([
-      isDrill.value ? api.getSubAggregates(params) : api.getAggregates(params),
-      api.getStats(),
-    ])
+    const aggPromise = isDrill.value ? api.getSubAggregates(params) : api.getAggregates(params)
+    const statsPromise = stats.value ? Promise.resolve(stats.value) : api.getStats()
+    const [aggRes, statsRes] = await Promise.all([aggPromise, statsPromise])
     if (currentFetchId !== fetchId) return
     rows.value = aggRes.rows
     stats.value = statsRes
-  } catch {
+  } catch (e: unknown) {
     if (currentFetchId !== fetchId) return
+    error.value = e instanceof Error ? e.message : String(e)
     rows.value = []
   } finally {
     if (currentFetchId === fetchId) {
@@ -147,11 +154,12 @@ async function fetchData() {
   }
 }
 
-watch(() => route.query, fetchData, { deep: true, immediate: true })
+watch(() => route.query, () => { error.value = ''; fetchData() }, { deep: true, immediate: true })
 </script>
 
 <template>
   <div>
+    <div v-if="error" class="flash-notice">{{ error }}</div>
     <StatsBar v-if="stats" :stats="stats" />
 
     <div class="toolbar">
@@ -161,12 +169,12 @@ watch(() => route.query, fetchData, { deep: true, immediate: true })
           size="small" @update:model-value="setGranularity" />
       </div>
       <div class="toolbar-right">
-        <a href="#" :class="['pill-sm', { active: attachments }]" @click.prevent="toggleFilter('attachments')">
+        <button type="button" :class="['pill-sm', { active: attachments }]" @click="toggleFilter('attachments')">
           Attachments Only
-        </a>
-        <a href="#" :class="['pill-sm', { active: hideDeleted }]" @click.prevent="toggleFilter('hide_deleted')">
+        </button>
+        <button type="button" :class="['pill-sm', { active: hideDeleted }]" @click="toggleFilter('hide_deleted')">
           Hide Deleted
-        </a>
+        </button>
       </div>
     </div>
 
@@ -174,7 +182,7 @@ watch(() => route.query, fetchData, { deep: true, immediate: true })
       <router-link :to="{ path: '/browse', query: { view: viewType } }">Browse</router-link>
       <span v-for="(v, k) in drillFilters" :key="k">
         <span> / </span>
-        <strong style="color: var(--fg);">{{ k }}: {{ v || '(empty)' }}</strong>
+        <strong class="text-fg">{{ k }}: {{ v || '(empty)' }}</strong>
       </span>
     </nav>
 
@@ -214,7 +222,7 @@ watch(() => route.query, fetchData, { deep: true, immediate: true })
       </tbody>
     </table>
 
-    <div v-if="rows.length > 0" class="result-count" style="margin-top: 8px;">
+    <div v-if="rows.length > 0" class="result-count">
       Showing {{ formatCount(rows.length) }} of {{ formatCount(rows[0]?.total_unique ?? rows.length) }} unique entries
     </div>
   </div>

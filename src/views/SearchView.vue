@@ -6,21 +6,30 @@ import { formatCount } from '../utils/format'
 import StatsBar from '../components/StatsBar.vue'
 import MessageTable from '../components/MessageTable.vue'
 import Pagination from '../components/Pagination.vue'
+import { useMessageNav } from '../composables/useMessageNav'
 
 const route = useRoute()
 const router = useRouter()
+const { storeMessageList } = useMessageNav()
 
 const messages = ref<MessageSummary[]>([])
 const stats = ref<TotalStats | null>(null)
 const hasMore = ref(false)
 const loading = ref(false)
+const error = ref('')
 const pageSize = 100
 
-const query = computed(() => (route.query.q as string) || '')
-const mode = computed(() => (route.query.mode as string) || 'fast')
-const page = computed(() => parseInt(route.query.page as string) || 1)
-const sortField = computed(() => (route.query.sort as string) || 'date')
-const sortDir = computed(() => (route.query.dir as string) || 'desc')
+function qstr(key: string, fallback: string): string {
+  const v = route.query[key]
+  if (Array.isArray(v)) return String(v[0] ?? fallback)
+  return v != null ? String(v) : fallback
+}
+
+const query = computed(() => qstr('q', ''))
+const mode = computed(() => qstr('mode', 'fast'))
+const page = computed(() => Math.max(1, parseInt(qstr('page', '1')) || 1))
+const sortField = computed(() => qstr('sort', 'date'))
+const sortDir = computed(() => qstr('dir', 'desc'))
 const hideDeleted = computed(() => route.query.hide_deleted === '1')
 const attachments = computed(() => route.query.attachments === '1')
 
@@ -75,8 +84,9 @@ async function fetchData() {
       const statsRes = await api.getStats()
       if (currentFetchId !== fetchId) return
       stats.value = statsRes
-    } catch {
+    } catch (e: unknown) {
       if (currentFetchId !== fetchId) return
+      error.value = e instanceof Error ? e.message : String(e)
       messages.value = []
     } finally {
       if (currentFetchId === fetchId) {
@@ -107,20 +117,22 @@ async function fetchData() {
     } else {
       const res = await api.searchFast(params)
       if (currentFetchId !== fetchId) return
-      // Fast search: use length > pageSize as hasMore sentinel
       const allMessages = res.messages
-      hasMore.value = allMessages.length > pageSize
-      messages.value = hasMore.value ? allMessages.slice(0, pageSize) : allMessages
+      hasMore.value = res.total_count > offset + allMessages.length
+      messages.value = allMessages.length > pageSize ? allMessages.slice(0, pageSize) : allMessages
       stats.value = res.stats ?? null
     }
+
+    storeMessageList(messages.value.map(m => m.id))
 
     if (!stats.value) {
       const statsRes = await api.getStats()
       if (currentFetchId !== fetchId) return
       stats.value = statsRes
     }
-  } catch {
+  } catch (e: unknown) {
     if (currentFetchId !== fetchId) return
+    error.value = e instanceof Error ? e.message : String(e)
     messages.value = []
   } finally {
     if (currentFetchId === fetchId) {
@@ -129,11 +141,12 @@ async function fetchData() {
   }
 }
 
-watch(() => route.query, fetchData, { deep: true, immediate: true })
+watch(() => route.query, () => { error.value = ''; fetchData() }, { deep: true, immediate: true })
 </script>
 
 <template>
   <div>
+    <div v-if="error" class="flash-notice">{{ error }}</div>
     <StatsBar v-if="stats" :stats="stats" />
 
     <form class="search-form" @submit.prevent="submitSearch">
@@ -150,18 +163,18 @@ watch(() => route.query, fetchData, { deep: true, immediate: true })
         <button type="submit" class="search-btn">Search</button>
       </div>
       <div class="search-controls">
-        <span :class="['pill-sm', { active: mode === 'fast' }]" @click="mode !== 'fast' && toggleMode()">Fast</span>
-        <span :class="['pill-sm', { active: mode === 'deep' }]" @click="mode !== 'deep' && toggleMode()">Deep</span>
+        <button type="button" :class="['pill-sm', { active: mode === 'fast' }]" :disabled="mode === 'fast'" @click="toggleMode()">Fast</button>
+        <button type="button" :class="['pill-sm', { active: mode === 'deep' }]" :disabled="mode === 'deep'" @click="toggleMode()">Deep</button>
         <span class="search-hint">
           {{ mode === 'fast' ? 'Searches subject and sender (faster)' : 'Searches full message body (slower)' }}
         </span>
         <span class="search-divider"></span>
-        <a href="#" :class="['pill-sm', { active: hideDeleted }]" @click.prevent="toggleFilter('hide_deleted')">
+        <button type="button" :class="['pill-sm', { active: hideDeleted }]" @click="toggleFilter('hide_deleted')">
           Hide Deleted
-        </a>
-        <a href="#" :class="['pill-sm', { active: attachments }]" @click.prevent="toggleFilter('attachments')">
+        </button>
+        <button type="button" :class="['pill-sm', { active: attachments }]" @click="toggleFilter('attachments')">
           Attachments Only
-        </a>
+        </button>
       </div>
     </form>
 

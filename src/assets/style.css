@@ -205,11 +205,6 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
   font-weight: 500;
 }
 
-.account-meta {
-  font-size: 12px;
-  color: var(--fg-muted);
-  margin-left: 8px;
-}
 
 .account-sync {
   font-size: 11px;
@@ -330,6 +325,9 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
   text-decoration: none;
   border: 1px solid var(--border);
   color: var(--fg-muted);
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
 }
 .pill-sm:hover { color: var(--fg); text-decoration: none; background: var(--bg-hover); }
 .pill-sm.active {
@@ -431,19 +429,6 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
 }
 .toolbar-left { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .toolbar-right { display: flex; gap: 8px; align-items: center; font-size: 12px; flex-wrap: wrap; }
-.account-select {
-  padding: 3px 8px;
-  font-size: 12px;
-  font-family: var(--font);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--bg);
-  color: var(--fg);
-  cursor: pointer;
-  outline: none;
-}
-.account-select:hover { border-color: var(--fg-muted); }
-.account-select:focus { border-color: var(--accent); }
 
 /* Message detail */
 .msg-subject {
@@ -493,15 +478,6 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
   color: var(--fg-muted);
   margin-left: 4px;
 }
-.msg-body {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  font-family: var(--font);
-  font-size: 13px;
-  line-height: 1.6;
-  margin: 0;
-}
-
 /* Attachment badge in message lists */
 .attachment-badge {
   margin-left: 4px;
@@ -509,22 +485,14 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
   color: var(--fg-muted);
 }
 
+/* From cell in message tables */
+.from-cell { max-width: 200px; }
+
 /* Date cells in message tables */
 .date-cell {
   white-space: nowrap;
   font-size: 12px;
   color: var(--fg-muted);
-}
-
-/* Loading spinner */
-.spinner {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -584,85 +552,6 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
   color: var(--fg-muted);
 }
 
-/* Danger button (small) */
-.btn-danger-sm {
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  border: 1px solid var(--danger);
-  border-radius: var(--radius);
-  background: none;
-  color: var(--danger);
-  cursor: pointer;
-  text-decoration: none;
-}
-.btn-danger-sm:hover {
-  background: var(--danger);
-  color: #fff;
-  text-decoration: none;
-}
-
-/* Command reference table */
-.cmd-table {
-  width: 100%;
-  font-size: 13px;
-  border-collapse: collapse;
-}
-.cmd-table td {
-  padding: 4px 0;
-}
-.cmd-table td:first-child {
-  padding-right: 16px;
-  white-space: nowrap;
-}
-.cmd-table td:last-child {
-  color: var(--fg-muted);
-}
-.cmd-table code {
-  font-family: var(--font);
-  font-size: 12px;
-  padding: 2px 6px;
-  background: var(--bg-alt);
-  border-radius: var(--radius);
-}
-
-/* Selection / delete mode */
-.sel-cell {
-  width: 0;
-  padding: 0 !important;
-  overflow: hidden;
-  transition: width 0.15s, padding 0.15s;
-}
-.sel-cell input[type="checkbox"] {
-  display: none;
-}
-.delete-mode .sel-cell {
-  width: 28px;
-  padding: 4px 6px !important;
-}
-.delete-mode .sel-cell input[type="checkbox"] {
-  display: inline;
-  cursor: pointer;
-  margin: 0;
-}
-.selection-bar {
-  display: none;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 10px 24px;
-  background: var(--bg-alt);
-  border-top: 2px solid var(--danger);
-  font-size: 13px;
-  font-weight: 600;
-  align-items: center;
-  gap: 12px;
-  z-index: 100;
-}
-.delete-mode .selection-bar {
-  display: flex;
-}
 
 /* Flash notices */
 .flash-notice {
@@ -690,12 +579,17 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
   color: var(--fg-muted);
 }
 
-/* Attachment download links */
-.msg-attachment-link {
-  color: var(--accent);
-}
-.msg-attachment-link:hover {
-  color: var(--accent-hover);
+
+/* Utility classes */
+.text-fg { color: var(--fg); }
+.text-muted { color: var(--fg-muted); }
+.text-sm { font-size: 12px; }
+
+/* Message body iframe */
+.msg-body-frame {
+  width: 100%;
+  border: none;
+  min-height: 200px;
 }
 
 /* Footer */
@@ -707,3 +601,4 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
   color: var(--fg-muted);
   text-align: center;
 }
+.footer-hint { margin-left: 8px; opacity: 0.6; }

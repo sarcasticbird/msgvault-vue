@@ -27,7 +27,7 @@ const { helpVisible } = useKeyboard()
     <router-view />
     <footer class="footer">
       msgvault
-      <span style="margin-left: 8px; opacity: 0.6;"><kbd>?</kbd> shortcuts</span>
+      <span class="footer-hint"><kbd>?</kbd> shortcuts</span>
     </footer>
     <HelpOverlay v-if="helpVisible" @close="helpVisible = false" />
   </div>

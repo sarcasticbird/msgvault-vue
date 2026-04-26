@@ -14,11 +14,18 @@ const { storeMessageList } = useMessageNav()
 const messages = ref<MessageSummary[]>([])
 const hasMore = ref(false)
 const loading = ref(true)
+const error = ref('')
 const pageSize = 100
 
-const page = computed(() => parseInt(route.query.page as string) || 1)
-const sortField = computed(() => (route.query.sort as string) || 'date')
-const sortDir = computed(() => (route.query.dir as string) || 'desc')
+function qstr(key: string, fallback: string): string {
+  const v = route.query[key]
+  if (Array.isArray(v)) return String(v[0] ?? fallback)
+  return v != null ? String(v) : fallback
+}
+
+const page = computed(() => Math.max(1, parseInt(qstr('page', '1')) || 1))
+const sortField = computed(() => qstr('sort', 'date'))
+const sortDir = computed(() => qstr('dir', 'desc'))
 
 const filterSummary = computed(() => {
   const order = [
@@ -32,8 +39,8 @@ const filterSummary = computed(() => {
   ]
   const parts: string[] = []
   for (const item of order) {
-    if (route.query[item.key] !== undefined) {
-      const v = (route.query[item.key] as string) || '(empty)'
+    if (route.query[item.key] != null) {
+      const v = qstr(item.key, '') || '(empty)'
       parts.push(`${item.label}: ${v}`)
     }
   }
@@ -72,20 +79,21 @@ async function fetchData() {
 
     const filterKeys = ['sender', 'sender_name', 'recipient', 'recipient_name', 'domain', 'label', 'time_period', 'granularity', 'conversation_id']
     for (const k of filterKeys) {
-      if (route.query[k] !== undefined) params[k] = route.query[k] as string
+      if (route.query[k] != null) params[k] = qstr(k, '')
     }
-    if (route.query.account) params.source_id = route.query.account as string
+    if (route.query.account) params.source_id = qstr('account', '')
     if (route.query.attachments === '1') params.attachments_only = 'true'
     if (route.query.hide_deleted === '1') params.hide_deleted = 'true'
 
     const res = await api.getFilteredMessages(params)
     if (currentFetchId !== fetchId) return
-    hasMore.value = res.has_more
-    messages.value = res.messages
+    hasMore.value = res.messages.length > pageSize
+    messages.value = hasMore.value ? res.messages.slice(0, pageSize) : res.messages
 
     storeMessageList(messages.value.map(m => m.id))
-  } catch {
+  } catch (e: unknown) {
     if (currentFetchId !== fetchId) return
+    error.value = e instanceof Error ? e.message : String(e)
     messages.value = []
   } finally {
     if (currentFetchId === fetchId) {
@@ -94,15 +102,16 @@ async function fetchData() {
   }
 }
 
-watch(() => route.query, fetchData, { deep: true, immediate: true })
+watch(() => route.query, () => { error.value = ''; fetchData() }, { deep: true, immediate: true })
 </script>
 
 <template>
   <div>
+    <div v-if="error" class="flash-notice">{{ error }}</div>
     <nav class="breadcrumb">
       <router-link to="/browse">Browse</router-link>
       <span> / </span>
-      <strong style="color: var(--fg);">{{ filterSummary }}</strong>
+      <strong class="text-fg">{{ filterSummary }}</strong>
     </nav>
 
     <div v-if="messages.length === 0 && !loading" class="empty-state">

@@ -70,10 +70,10 @@ onUnmounted(() => window.removeEventListener('message', onIframeMessage))
       </span>
     </nav>
 
-    <div class="card" style="margin-bottom: 16px;">
+    <div class="card">
       <h2 class="msg-subject">
         <template v-if="msg.subject">{{ msg.subject }}</template>
-        <em v-else style="color: var(--fg-muted);">(no subject)</em>
+        <em v-else class="text-muted">(no subject)</em>
       </h2>
       <table class="msg-headers">
         <tbody>
@@ -108,7 +108,7 @@ onUnmounted(() => window.removeEventListener('message', onIframeMessage))
           <span class="msg-attachment-size">({{ formatBytes(att.size_bytes) }})</span>
         </div>
       </div>
-      <div v-if="msg.conversation_id" class="msg-section" style="font-size: 12px;">
+      <div v-if="msg.conversation_id" class="msg-section text-sm">
         <router-link :to="{ path: '/messages', query: { conversation_id: String(msg.conversation_id) } }">
           View thread
         </router-link>
@@ -122,7 +122,6 @@ onUnmounted(() => window.removeEventListener('message', onIframeMessage))
         class="msg-body-frame"
         frameborder="0"
         scrolling="no"
-        style="width: 100%; border: none; min-height: 200px;"
       ></iframe>
     </div>
   </template>

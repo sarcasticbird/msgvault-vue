@@ -3,9 +3,9 @@ defineEmits<{ close: [] }>()
 </script>
 
 <template>
-  <div class="help-overlay visible" @click.self="$emit('close')">
+  <div class="help-overlay visible" role="dialog" aria-labelledby="help-title" aria-modal="true" @click.self="$emit('close')">
     <div class="help-dialog">
-      <h3>Keyboard Shortcuts</h3>
+      <h3 id="help-title">Keyboard Shortcuts</h3>
       <table>
         <tbody>
           <tr><td><kbd>j</kbd> <kbd>k</kbd></td><td>Navigate rows up / down</td></tr>

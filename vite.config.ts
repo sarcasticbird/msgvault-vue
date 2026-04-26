@@ -3,10 +3,13 @@ import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
   plugins: [vue()],
+  build: {
+    sourcemap: true,
+  },
   server: {
     host: true,
     port: 3000,
-    allowedHosts: true,
+    allowedHosts: ['.ts.net', 'localhost', '127.0.0.1'],
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
