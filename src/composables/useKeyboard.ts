@@ -1,11 +1,14 @@
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 
 export const helpVisible = ref(false)
 export const activeRow = ref(-1)
 
 export function useKeyboard() {
   const router = useRouter()
+  const route = useRoute()
+
+  watch(() => route.fullPath, () => { activeRow.value = -1 })
 
   function isInputFocused(): boolean {
     const el = document.activeElement
