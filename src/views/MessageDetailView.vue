@@ -60,10 +60,10 @@ onUnmounted(() => window.removeEventListener('message', onIframeMessage))
     <nav class="breadcrumb">
       <a href="#" @click.prevent="goBack()">&larr; Back to messages</a>
       <span v-if="nav.total > 0" class="msg-nav">
-        <router-link v-if="nav.prev" :to="`/messages/${nav.prev}`" id="msg-prev" class="msg-nav-link">
+        <router-link v-if="nav.prev" id="msg-prev" :to="`/messages/${nav.prev}`" class="msg-nav-link">
           &larr; Prev
         </router-link>
-        <router-link v-if="nav.next" :to="`/messages/${nav.next}`" id="msg-next" class="msg-nav-link">
+        <router-link v-if="nav.next" id="msg-next" :to="`/messages/${nav.next}`" class="msg-nav-link">
           Next &rarr;
         </router-link>
         <span class="msg-nav-pos">{{ nav.position }}</span>

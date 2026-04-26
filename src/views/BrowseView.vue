@@ -137,7 +137,7 @@ async function fetchData() {
     if (currentFetchId !== fetchId) return
     rows.value = aggRes.rows
     stats.value = statsRes
-  } catch (e) {
+  } catch {
     if (currentFetchId !== fetchId) return
     rows.value = []
   } finally {
