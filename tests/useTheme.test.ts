@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 // useTheme uses onMounted internally, so we test the exported API

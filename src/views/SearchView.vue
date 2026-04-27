@@ -72,18 +72,18 @@ async function fetchData() {
   if (!query.value) {
     loading.value = true
     try {
-      const res = await api.getFilteredMessages({
+      const messagesPromise = api.getFilteredMessages({
         sort: 'date',
         direction: 'desc',
         limit: '100',
       })
+      const statsPromise = stats.value ? Promise.resolve(stats.value) : api.getStats()
+      const [res, statsRes] = await Promise.all([messagesPromise, statsPromise])
       if (currentFetchId !== fetchId) return
       messages.value = res.messages
       hasMore.value = false
-
-      const statsRes = await api.getStats()
-      if (currentFetchId !== fetchId) return
       stats.value = statsRes
+      storeMessageList(messages.value.map(m => m.id))
     } catch (e: unknown) {
       if (currentFetchId !== fetchId) return
       error.value = e instanceof Error ? e.message : String(e)

@@ -1,10 +1,46 @@
 <script setup lang="ts">
-defineEmits<{ close: [] }>()
+import { ref, onMounted, onUnmounted } from 'vue'
+
+const emit = defineEmits<{ close: [] }>()
+
+const dialogRef = ref<HTMLElement | null>(null)
+let previousFocus: Element | null = null
+
+function trapFocus(e: KeyboardEvent) {
+  if (e.key !== 'Tab' || !dialogRef.value) return
+  const focusable = dialogRef.value.querySelectorAll<HTMLElement>(
+    'a[href], button, [tabindex]:not([tabindex="-1"])'
+  )
+  if (focusable.length === 0) {
+    e.preventDefault()
+    return
+  }
+  const first = focusable[0]
+  const last = focusable[focusable.length - 1]
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault()
+    last.focus()
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault()
+    first.focus()
+  }
+}
+
+onMounted(() => {
+  previousFocus = document.activeElement
+  dialogRef.value?.focus()
+  document.addEventListener('keydown', trapFocus)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', trapFocus)
+  if (previousFocus instanceof HTMLElement) previousFocus.focus()
+})
 </script>
 
 <template>
-  <div class="help-overlay visible" role="dialog" aria-labelledby="help-title" aria-modal="true" @click.self="$emit('close')">
-    <div class="help-dialog">
+  <div class="help-overlay visible" role="dialog" aria-labelledby="help-title" aria-modal="true" @click.self="emit('close')">
+    <div ref="dialogRef" class="help-dialog" tabindex="-1">
       <h3 id="help-title">Keyboard Shortcuts</h3>
       <table>
         <tbody>

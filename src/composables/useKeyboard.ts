@@ -105,14 +105,14 @@ export function useKeyboard() {
         }
         break
       case 'n': {
-        const next = document.querySelector('.pagination a:last-of-type') as HTMLAnchorElement
+        const next = document.querySelector('.pagination button:last-of-type') as HTMLButtonElement
         if (next?.textContent?.trim() === 'Next') {
           next.click()
         }
         break
       }
       case 'p': {
-        const prev = document.querySelector('.pagination a:first-of-type') as HTMLAnchorElement
+        const prev = document.querySelector('.pagination button:first-of-type') as HTMLButtonElement
         if (prev?.textContent?.trim() === 'Prev') {
           prev.click()
         }

@@ -308,6 +308,9 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
   text-decoration: none;
   border: 1px solid var(--border);
   color: var(--fg-muted);
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
 }
 .pill:hover { color: var(--fg); text-decoration: none; background: var(--bg-hover); }
 .pill.active {
@@ -367,14 +370,17 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
   align-items: center;
   font-size: 13px;
 }
-.pagination a {
+.pagination-btn {
   padding: 4px 10px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   color: var(--fg-muted);
-  text-decoration: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
 }
-.pagination a:hover { background: var(--bg-hover); color: var(--fg); text-decoration: none; }
+.pagination-btn:hover { background: var(--bg-hover); color: var(--fg); }
 .pagination .page-info { padding: 4px 8px; color: var(--fg-muted); }
 
 /* Search form */
