@@ -10,14 +10,14 @@ defineEmits<{ 'update:modelValue': [value: string] }>()
 
 <template>
   <div class="pill-group">
-    <a
+    <button
       v-for="opt in options"
       :key="opt.value"
-      href="#"
+      type="button"
       :class="[size === 'small' ? 'pill-sm' : 'pill', { active: modelValue === opt.value }]"
-      @click.prevent="$emit('update:modelValue', opt.value)"
+      @click="$emit('update:modelValue', opt.value)"
     >
       {{ opt.label }}
-    </a>
+    </button>
   </div>
 </template>

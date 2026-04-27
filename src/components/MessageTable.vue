@@ -45,7 +45,7 @@ function sortIndicator(field: string, currentField?: string, dir?: string): stri
     <tbody>
       <tr v-for="msg in messages" :key="msg.id">
         <td class="date-cell">{{ formatMessageDate(msg.sent_at) }}</td>
-        <td style="max-width: 200px;">{{ msg.from }}</td>
+        <td class="from-cell">{{ msg.from }}</td>
         <td>
           <router-link :to="`/messages/${msg.id}`">
             <template v-if="msg.subject">{{ msg.subject }}</template>

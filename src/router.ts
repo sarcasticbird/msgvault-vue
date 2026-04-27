@@ -6,6 +6,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/messages', name: 'messages', component: () => import('./views/MessagesView.vue') },
   { path: '/messages/:id', name: 'message-detail', component: () => import('./views/MessageDetailView.vue') },
   { path: '/search', name: 'search', component: () => import('./views/SearchView.vue') },
+  { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('./views/NotFoundView.vue') },
 ]
 
 export const router = createRouter({

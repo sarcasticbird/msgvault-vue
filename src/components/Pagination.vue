@@ -12,8 +12,8 @@ defineEmits<{
 
 <template>
   <div v-if="page > 1 || hasMore" class="pagination">
-    <a v-if="page > 1" href="#" @click.prevent="$emit('prev')">Prev</a>
+    <button v-if="page > 1" type="button" class="pagination-btn" @click="$emit('prev')">Prev</button>
     <span class="page-info">Page {{ page }}</span>
-    <a v-if="hasMore" href="#" @click.prevent="$emit('next')">Next</a>
+    <button v-if="hasMore" type="button" class="pagination-btn" @click="$emit('next')">Next</button>
   </div>
 </template>

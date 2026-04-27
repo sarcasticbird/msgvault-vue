@@ -105,29 +105,27 @@ export function useKeyboard() {
         }
         break
       case 'n': {
-        const next = document.querySelector('.pagination a:last-of-type') as HTMLAnchorElement
+        const next = document.querySelector('.pagination button:last-of-type') as HTMLButtonElement
         if (next?.textContent?.trim() === 'Next') {
-          const href = next.getAttribute('href')
-          if (href) router.push(href)
+          next.click()
         }
         break
       }
       case 'p': {
-        const prev = document.querySelector('.pagination a:first-of-type') as HTMLAnchorElement
+        const prev = document.querySelector('.pagination button:first-of-type') as HTMLButtonElement
         if (prev?.textContent?.trim() === 'Prev') {
-          const href = prev.getAttribute('href')
-          if (href) router.push(href)
+          prev.click()
         }
         break
       }
       case 'ArrowLeft': {
         const prevMsg = document.getElementById('msg-prev') as HTMLAnchorElement
-        if (prevMsg) { const href = prevMsg.getAttribute('href'); if (href) router.push(href); e.preventDefault() }
+        if (prevMsg) { prevMsg.click(); e.preventDefault() }
         break
       }
       case 'ArrowRight': {
         const nextMsg = document.getElementById('msg-next') as HTMLAnchorElement
-        if (nextMsg) { const href = nextMsg.getAttribute('href'); if (href) router.push(href); e.preventDefault() }
+        if (nextMsg) { nextMsg.click(); e.preventDefault() }
         break
       }
     }

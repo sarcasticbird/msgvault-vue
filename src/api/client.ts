@@ -140,7 +140,7 @@ export function createApiClient(baseUrl: string, apiKey?: string): ApiClient {
   }
 
   function qs(params: Record<string, string>): string {
-    const entries = Object.entries(params).filter(([, v]) => v !== '' && v !== undefined)
+    const entries = Object.entries(params).filter(([, v]) => v != null && v !== '')
     if (entries.length === 0) return ''
     return '?' + new URLSearchParams(entries).toString()
   }

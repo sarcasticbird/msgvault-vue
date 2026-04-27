@@ -11,6 +11,7 @@ const { getNavigation } = useMessageNav()
 
 const msg = ref<MessageDetail | null>(null)
 const error = ref('')
+const htmlAvailable = ref(false)
 
 const messageId = computed(() => Number(route.params.id))
 const nav = computed(() => getNavigation(messageId.value))
@@ -18,8 +19,21 @@ const nav = computed(() => getNavigation(messageId.value))
 watch(() => route.params.id, async (id) => {
   msg.value = null
   error.value = ''
+  htmlAvailable.value = false
   try {
-    msg.value = await api.getMessage(Number(id))
+    const numId = Number(id)
+    const [detail, htmlRes] = await Promise.allSettled([
+      api.getMessage(numId),
+      fetch(`/messages/${numId}/html`, { method: 'HEAD' }),
+    ])
+    if (detail.status === 'fulfilled') {
+      msg.value = detail.value
+    } else {
+      throw detail.reason
+    }
+    if (htmlRes.status === 'fulfilled' && htmlRes.value.ok) {
+      htmlAvailable.value = true
+    }
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : String(e)
   }
@@ -70,10 +84,10 @@ onUnmounted(() => window.removeEventListener('message', onIframeMessage))
       </span>
     </nav>
 
-    <div class="card" style="margin-bottom: 16px;">
+    <div class="card">
       <h2 class="msg-subject">
         <template v-if="msg.subject">{{ msg.subject }}</template>
-        <em v-else style="color: var(--fg-muted);">(no subject)</em>
+        <em v-else class="text-muted">(no subject)</em>
       </h2>
       <table class="msg-headers">
         <tbody>
@@ -108,7 +122,7 @@ onUnmounted(() => window.removeEventListener('message', onIframeMessage))
           <span class="msg-attachment-size">({{ formatBytes(att.size_bytes) }})</span>
         </div>
       </div>
-      <div v-if="msg.conversation_id" class="msg-section" style="font-size: 12px;">
+      <div v-if="msg.conversation_id" class="msg-section text-sm">
         <router-link :to="{ path: '/messages', query: { conversation_id: String(msg.conversation_id) } }">
           View thread
         </router-link>
@@ -117,13 +131,14 @@ onUnmounted(() => window.removeEventListener('message', onIframeMessage))
 
     <div class="card">
       <iframe
+        v-if="htmlAvailable"
         sandbox="allow-scripts"
         :src="`/messages/${msg.id}/html`"
         class="msg-body-frame"
         frameborder="0"
         scrolling="no"
-        style="width: 100%; border: none; min-height: 200px;"
       ></iframe>
+      <pre v-else class="msg-body-text">{{ msg.body }}</pre>
     </div>
   </template>
 </template>
