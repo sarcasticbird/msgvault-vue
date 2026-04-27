@@ -2,6 +2,8 @@
 
 Standalone Vue 3 frontend for [msgvault](https://github.com/wesm/msgvault).
 
+<img width="1213" height="541" alt="image" src="https://github.com/user-attachments/assets/4f6b387c-5f24-4de8-98f3-ac87d7d7ea04" />
+
 ## About msgvault
 
 [msgvault](https://github.com/wesm/msgvault) is an excellent offline email archival tool that exports and stores Gmail data locally with full-text search, Parquet-based analytics, and a Bubble Tea TUI. It supports multi-account sync, incremental updates, Apple Mail import, and content-addressed attachment deduplication. If you have years of email you want to own and search locally, msgvault is the tool for the job. Check out the [msgvault repo](https://github.com/wesm/msgvault) for the backend, CLI, and TUI.
