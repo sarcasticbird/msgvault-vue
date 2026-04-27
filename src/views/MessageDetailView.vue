@@ -27,15 +27,20 @@ const emailHtml = computed(() => {
 
 const srcdoc = computed(() => emailHtml.value?.srcdoc ?? '')
 
+let currentRequest = 0
 watch(() => route.params.id, async (id) => {
+  const requestId = ++currentRequest
   msg.value = null
   error.value = ''
   hasExternalImages.value = false
   externalImagesLoaded.value = false
   cleanupResizeObserver()
   try {
-    msg.value = await api.getMessage(Number(id))
+    const detail = await api.getMessage(Number(id))
+    if (requestId !== currentRequest) return
+    msg.value = detail
   } catch (e: unknown) {
+    if (requestId !== currentRequest) return
     error.value = e instanceof Error ? e.message : String(e)
   }
 }, { immediate: true })
@@ -186,7 +191,7 @@ onUnmounted(cleanupResizeObserver)
       <iframe
         v-if="srcdoc"
         ref="iframeRef"
-        sandbox="allow-same-origin"
+        sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
         :srcdoc="srcdoc"
         class="msg-body-frame"
         frameborder="0"

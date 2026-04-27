@@ -43,7 +43,21 @@ export function buildEmailSrcdoc(bodyHtml: string, messageId: number): Sanitized
     }
   })
 
+  doc.querySelectorAll('image, source, video[poster], input[type="image"]').forEach((el) => {
+    for (const attr of ['src', 'href', 'xlink:href', 'srcset', 'poster']) {
+      const v = el.getAttribute(attr)
+      if (v && /^https?:/i.test(v)) {
+        hasExternalImages = true
+        el.removeAttribute(attr)
+      }
+    }
+  })
+
   doc.querySelectorAll('a').forEach((a) => {
+    const href = (a.getAttribute('href') || '').trim().toLowerCase()
+    if (href.startsWith('javascript:') || href.startsWith('vbscript:') || href.startsWith('data:')) {
+      a.removeAttribute('href')
+    }
     a.setAttribute('target', '_blank')
     a.setAttribute('rel', 'noopener noreferrer')
   })
