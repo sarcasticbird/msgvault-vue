@@ -15,10 +15,6 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
       },
-      '/messages': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-      },
       '/attachments': {
         target: 'http://localhost:8080',
         changeOrigin: true,

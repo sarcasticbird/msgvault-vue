@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api, type MessageDetail } from '../api/client'
 import { formatBytes } from '../utils/format'
+import { buildEmailSrcdoc } from '../utils/htmlEmail'
 import { useMessageNav } from '../composables/useMessageNav'
 
 const route = useRoute()
@@ -11,40 +12,89 @@ const { getNavigation } = useMessageNav()
 
 const msg = ref<MessageDetail | null>(null)
 const error = ref('')
-const htmlAvailable = ref(false)
+const hasExternalImages = ref(false)
+const externalImagesLoaded = ref(false)
+const iframeRef = ref<HTMLIFrameElement | null>(null)
+let resizeObserver: ResizeObserver | null = null
 
 const messageId = computed(() => Number(route.params.id))
 const nav = computed(() => getNavigation(messageId.value))
 
+const emailHtml = computed(() => {
+  if (!msg.value?.body_html) return null
+  return buildEmailSrcdoc(msg.value.body_html, msg.value.id)
+})
+
+const srcdoc = computed(() => emailHtml.value?.srcdoc ?? '')
+
 watch(() => route.params.id, async (id) => {
   msg.value = null
   error.value = ''
-  htmlAvailable.value = false
+  hasExternalImages.value = false
+  externalImagesLoaded.value = false
+  cleanupResizeObserver()
   try {
-    const numId = Number(id)
-    const [detail, htmlRes] = await Promise.allSettled([
-      api.getMessage(numId),
-      fetch(`/messages/${numId}/html`, { method: 'HEAD' }),
-    ])
-    if (detail.status === 'fulfilled') {
-      msg.value = detail.value
-    } else {
-      throw detail.reason
-    }
-    if (htmlRes.status === 'fulfilled' && htmlRes.value.ok) {
-      htmlAvailable.value = true
-    }
+    msg.value = await api.getMessage(Number(id))
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : String(e)
   }
 }, { immediate: true })
 
-function onIframeMessage(e: MessageEvent) {
-  const frame = document.querySelector('.msg-body-frame') as HTMLIFrameElement
-  if (!frame || e.source !== frame.contentWindow) return
-  const h = Number(e.data?.height)
-  if (e.data?.type === 'resize' && Number.isFinite(h) && h >= 0) {
-    frame.style.height = h + 'px'
+watch(emailHtml, (result) => {
+  hasExternalImages.value = result?.hasExternalImages ?? false
+})
+
+function cleanupResizeObserver() {
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+}
+
+function syncIframeHeight() {
+  const frame = iframeRef.value
+  if (!frame) return
+  try {
+    const body = frame.contentDocument?.body
+    if (body) {
+      const h = body.scrollHeight
+      if (h > 0) frame.style.height = h + 'px'
+    }
+  } catch {
+    // cross-origin access denied — ignore
+  }
+}
+
+function onIframeLoad() {
+  const frame = iframeRef.value
+  if (!frame) return
+  syncIframeHeight()
+  try {
+    const body = frame.contentDocument?.body
+    if (body) {
+      cleanupResizeObserver()
+      resizeObserver = new ResizeObserver(syncIframeHeight)
+      resizeObserver.observe(body)
+    }
+  } catch {
+    // cross-origin access denied — ignore
+  }
+}
+
+function loadExternalImages() {
+  const frame = iframeRef.value
+  if (!frame) return
+  try {
+    const doc = frame.contentDocument
+    if (!doc) return
+    doc.querySelectorAll('img[data-original-src]').forEach((img) => {
+      const original = img.getAttribute('data-original-src')
+      if (original) img.setAttribute('src', original)
+    })
+    externalImagesLoaded.value = true
+    nextTick(syncIframeHeight)
+  } catch {
+    // cross-origin access denied — ignore
   }
 }
 
@@ -56,8 +106,7 @@ function goBack() {
   }
 }
 
-onMounted(() => window.addEventListener('message', onIframeMessage))
-onUnmounted(() => window.removeEventListener('message', onIframeMessage))
+onUnmounted(cleanupResizeObserver)
 </script>
 
 <template>
@@ -74,10 +123,10 @@ onUnmounted(() => window.removeEventListener('message', onIframeMessage))
     <nav class="breadcrumb">
       <a href="#" @click.prevent="goBack()">&larr; Back to messages</a>
       <span v-if="nav.total > 0" class="msg-nav">
-        <router-link v-if="nav.prev" id="msg-prev" :to="`/messages/${nav.prev}`" class="msg-nav-link">
+        <router-link v-if="nav.prev" id="msg-prev" :to="`/messages/${nav.prev}`" replace class="msg-nav-link">
           &larr; Prev
         </router-link>
-        <router-link v-if="nav.next" id="msg-next" :to="`/messages/${nav.next}`" class="msg-nav-link">
+        <router-link v-if="nav.next" id="msg-next" :to="`/messages/${nav.next}`" replace class="msg-nav-link">
           Next &rarr;
         </router-link>
         <span class="msg-nav-pos">{{ nav.position }}</span>
@@ -130,13 +179,19 @@ onUnmounted(() => window.removeEventListener('message', onIframeMessage))
     </div>
 
     <div class="card">
+      <div v-if="hasExternalImages && !externalImagesLoaded" class="ext-img-banner">
+        External images are blocked.
+        <button class="ext-img-btn" @click="loadExternalImages">Load external images</button>
+      </div>
       <iframe
-        v-if="htmlAvailable"
-        sandbox="allow-scripts"
-        :src="`/messages/${msg.id}/html`"
+        v-if="srcdoc"
+        ref="iframeRef"
+        sandbox="allow-same-origin"
+        :srcdoc="srcdoc"
         class="msg-body-frame"
         frameborder="0"
         scrolling="no"
+        @load="onIframeLoad"
       ></iframe>
       <pre v-else class="msg-body-text">{{ msg.body }}</pre>
     </div>
