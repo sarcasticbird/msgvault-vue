@@ -24,12 +24,12 @@ No UI framework — uses the same CSS from the original web UI.
 
 ## Quick Start
 
-Requires [Flox](https://flox.dev) and a running msgvault server on port 8080.
+Requires Node.js 20+ and a running msgvault server on port 8080.
 
 ```bash
 git clone <repo-url> && cd msgvault-vue
-flox activate -c 'npm install'
-flox activate -c 'npm run dev'
+npm install
+npm run dev
 ```
 
 Open http://localhost:3000. The Vite dev server proxies `/api`, `/messages`, and `/attachments` to `localhost:8080`.
@@ -37,14 +37,14 @@ Open http://localhost:3000. The Vite dev server proxies `/api`, `/messages`, and
 ## Commands
 
 ```bash
-flox activate -c 'npm run dev'        # Dev server (port 3000, hot reload)
-flox activate -c 'npm run build'      # Production build (typecheck + vite build)
-flox activate -c 'npm run preview'    # Preview production build
-flox activate -c 'npm run test'       # Run tests
-flox activate -c 'npm run test:watch' # Watch mode tests
-flox activate -c 'npm run lint'       # Lint (ESLint)
-flox activate -c 'npm run lint:fix'   # Lint with auto-fix
-flox activate -c 'npm run typecheck'  # Type check (vue-tsc)
+npm run dev        # Dev server (port 3000, hot reload)
+npm run build      # Production build (typecheck + vite build)
+npm run preview    # Preview production build
+npm run test       # Run tests
+npm run test:watch # Watch mode tests
+npm run lint       # Lint (ESLint)
+npm run lint:fix   # Lint with auto-fix
+npm run typecheck  # Type check (vue-tsc)
 ```
 
 ## Pages
@@ -56,6 +56,7 @@ flox activate -c 'npm run typecheck'  # Type check (vue-tsc)
 | `/messages` | Messages | Filtered message list with sorting and pagination |
 | `/messages/:id` | Message Detail | Full message headers, attachments, sandboxed HTML body |
 | `/search` | Search | Fast search with deep search fallback |
+| `/*` | Not Found | 404 catch-all with link back to dashboard |
 
 ## Architecture
 
@@ -77,6 +78,7 @@ src/
     DashboardView.vue    # Dashboard with stats + accounts
     MessageDetailView.vue # Single message with iframe body
     MessagesView.vue     # Filtered message list
+    NotFoundView.vue     # 404 catch-all
     SearchView.vue       # Search interface
   utils/format.ts        # Formatting helpers (bytes, counts, dates)
   router.ts              # Vue Router config
@@ -144,7 +146,7 @@ Message HTML bodies are rendered in a sandboxed iframe (`sandbox="allow-scripts"
 ## Tests
 
 ```bash
-flox activate -c 'npm run test'
+npm run test
 ```
 
 45 tests across 4 files:
