@@ -38,6 +38,7 @@ export interface MessageSummary {
 
 export interface MessageDetail extends MessageSummary {
   body: string
+  body_html?: string
   attachments: AttachmentInfo[]
 }
 

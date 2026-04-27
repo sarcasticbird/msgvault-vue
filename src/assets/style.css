@@ -591,6 +591,29 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
 .text-muted { color: var(--fg-muted); }
 .text-sm { font-size: 12px; }
 
+/* External image banner */
+.ext-img-banner {
+  padding: 8px 16px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--fg-muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.ext-img-btn {
+  margin-left: 8px;
+  cursor: pointer;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 2px 8px;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: inherit;
+}
+.ext-img-btn:hover { background: var(--bg-hover); }
+
 /* Message body iframe */
 .msg-body-frame {
   width: 100%;
