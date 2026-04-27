@@ -118,8 +118,8 @@ async function fetchData() {
       const res = await api.searchFast(params)
       if (currentFetchId !== fetchId) return
       const allMessages = res.messages
-      hasMore.value = res.total_count > offset + allMessages.length
-      messages.value = allMessages.length > pageSize ? allMessages.slice(0, pageSize) : allMessages
+      hasMore.value = allMessages.length > pageSize
+      messages.value = hasMore.value ? allMessages.slice(0, pageSize) : allMessages
       stats.value = res.stats ?? null
     }
 
