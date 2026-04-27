@@ -11,6 +11,7 @@ const { getNavigation } = useMessageNav()
 
 const msg = ref<MessageDetail | null>(null)
 const error = ref('')
+const htmlAvailable = ref(false)
 
 const messageId = computed(() => Number(route.params.id))
 const nav = computed(() => getNavigation(messageId.value))
@@ -18,8 +19,21 @@ const nav = computed(() => getNavigation(messageId.value))
 watch(() => route.params.id, async (id) => {
   msg.value = null
   error.value = ''
+  htmlAvailable.value = false
   try {
-    msg.value = await api.getMessage(Number(id))
+    const numId = Number(id)
+    const [detail, htmlRes] = await Promise.allSettled([
+      api.getMessage(numId),
+      fetch(`/messages/${numId}/html`, { method: 'HEAD' }),
+    ])
+    if (detail.status === 'fulfilled') {
+      msg.value = detail.value
+    } else {
+      throw detail.reason
+    }
+    if (htmlRes.status === 'fulfilled' && htmlRes.value.ok) {
+      htmlAvailable.value = true
+    }
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : String(e)
   }
@@ -117,12 +131,14 @@ onUnmounted(() => window.removeEventListener('message', onIframeMessage))
 
     <div class="card">
       <iframe
+        v-if="htmlAvailable"
         sandbox="allow-scripts"
         :src="`/messages/${msg.id}/html`"
         class="msg-body-frame"
         frameborder="0"
         scrolling="no"
       ></iframe>
+      <pre v-else class="msg-body-text">{{ msg.body }}</pre>
     </div>
   </template>
 </template>

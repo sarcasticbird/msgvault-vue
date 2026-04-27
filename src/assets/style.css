@@ -598,6 +598,17 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
   min-height: 200px;
 }
 
+.msg-body-text {
+  margin: 0;
+  padding: 12px 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--fg);
+}
+
 /* Footer */
 .footer {
   padding: 16px 0;

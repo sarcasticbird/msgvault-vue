@@ -103,13 +103,9 @@ async function pollSync(email: string) {
       </div>
     </div>
 
-    <div class="card">
+    <div v-if="accounts.length > 0" class="card">
       <div class="card-title">Accounts</div>
-      <div v-if="accounts.length === 0" class="empty-state">
-        <div class="empty-state-title">No accounts configured</div>
-        <p>Run <code>msgvault add-account you@gmail.com</code> to get started.</p>
-      </div>
-      <ul v-else class="account-list">
+      <ul class="account-list">
         <li v-for="acct in accounts" :key="acct.email" class="account-item">
           <span class="account-email">{{ acct.email }}</span>
           <span class="account-sync-group">
