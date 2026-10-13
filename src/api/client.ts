@@ -163,5 +163,4 @@ export function createApiClient(baseUrl: string, apiKey?: string): ApiClient {
 
 export const api = createApiClient(
   import.meta.env.VITE_API_URL || '/api/v1',
-  import.meta.env.VITE_API_KEY || undefined,
 )

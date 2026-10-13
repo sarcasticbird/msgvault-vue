@@ -26,17 +26,19 @@ No UI framework — uses the same CSS from the original web UI.
 
 ## Quick Start
 
-Requires Node.js 20+ and a running msgvault server on port 8080.
+Requires Node.js 24+ and a running msgvault server on port 8080.
 
 ```bash
 git clone <repo-url> && cd msgvault-vue
-npm install
-npm run dev
+flox activate -c 'npm ci'
+flox activate -c 'npm run dev'
 ```
 
-Open http://localhost:3000. The Vite dev server proxies `/api`, `/messages`, and `/attachments` to `localhost:8080`.
+Open http://localhost:3000. The Vite dev server proxies `/api` and `/attachments` to `127.0.0.1:8080`.
 
 ## Commands
+
+Run these commands inside `flox activate`.
 
 ```bash
 npm run dev        # Dev server (port 3000, hot reload)
@@ -100,7 +102,8 @@ Key endpoints used:
 - `GET /api/v1/aggregates` — browse views
 - `GET /api/v1/messages/filter` — filtered message list
 - `GET /api/v1/messages/{id}` — message detail
-- `GET /messages/{id}/html` — rendered HTML body (proxied, not under `/api`)
+- `GET /api/v1/messages/{id}` includes the text and HTML body
+- `GET /api/v1/messages/{id}/inline?cid={cid}` — inline images
 - `GET /api/v1/search/fast` — fast search
 - `GET /api/v1/search/deep` — deep (paginated) search
 
@@ -109,14 +112,21 @@ Key endpoints used:
 Copy `.env.example` to `.env` for local overrides:
 
 ```bash
-# API base URL (dev server proxies by default, only needed for production)
+# Browser API base URL through the same-origin proxy
 VITE_API_URL=/api/v1
 
-# API key for remote access (WARNING: inlined into JS bundle at build time)
-# VITE_API_KEY=your-key
+# Backend URL and credential used only by the server-side proxy
+MSGVAULT_API_URL=http://127.0.0.1:8080
+# Set MSGVAULT_API_KEY privately to match the backend's server.api_key.
+MSGVAULT_FRONTEND_HOST=127.0.0.1
 ```
 
-The Vite dev server proxy config is in `vite.config.ts`.
+The Vite dev server proxy config is in `vite.config.ts`. `VITE_API_KEY` is rejected
+because Vite exposes variables with that prefix to browser code. A static `dist/`
+deployment needs its own server-side proxy with the same authentication settings.
+Anyone who can reach the proxy can use its archive credential. Keep the frontend
+on loopback or a private tailnet address until separate frontend authentication is
+configured. Apple Mail job deployment is documented in [ops/README.md](ops/README.md).
 
 ## Keyboard Shortcuts
 
@@ -135,7 +145,10 @@ Press `?` to see the help overlay. Highlights:
 
 ## Email Rendering
 
-Message HTML bodies are rendered in a sandboxed iframe (`sandbox="allow-scripts"`) that loads from `/messages/{id}/html`. The iframe communicates its content height via `postMessage` for auto-resizing.
+Message HTML bodies are fetched through the API, sanitized, and rendered in a
+sandboxed iframe (`sandbox="allow-scripts"`). CID images use the authenticated
+same-origin proxy. The iframe communicates its content height via `postMessage`
+for auto-resizing.
 
 ## Development Notes
 
@@ -143,7 +156,7 @@ Message HTML bodies are rendered in a sandboxed iframe (`sandbox="allow-scripts"
 - **Theme** — cycles auto/dark/light, persisted to localStorage
 - **Race conditions** — all async data fetching uses fetchId counters to discard stale responses
 - **Navigation** — prev/next message navigation uses a stored ID list from the last message list view
-- **Accounts** — the API merges database sources with config entries, so newly added accounts appear immediately
+- **Accounts** — `/accounts` lists scheduler-configured accounts; imported-only sources may be absent
 
 ## Tests
 
@@ -151,11 +164,13 @@ Message HTML bodies are rendered in a sandboxed iframe (`sandbox="allow-scripts"
 npm run test
 ```
 
-45 tests across 4 files:
+48 tests across 6 files:
 - `format.test.ts` — all formatting functions (bytes, counts, dates, relative times)
 - `client.test.ts` — API client (auth, errors, all endpoints, URL encoding)
 - `useMessageNav.test.ts` — message navigation composable (edge cases, state management)
 - `useTheme.test.ts` — theme toggle cycle and DOM/localStorage persistence
+- `htmlEmail.test.ts` — encoded CID image URLs for msgvault v0.21
+- `proxy.test.ts` — authenticated JSON and image requests through a real proxy, and credential-free Vite debug output
 
 ## Pre-commit Hooks
 

@@ -19,5 +19,6 @@
     "types": ["vite/client"]
   },
   "include": ["src/**/*.ts", "src/**/*.vue", "tests/**/*.ts"],
+  "exclude": ["tests/proxy.test.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
