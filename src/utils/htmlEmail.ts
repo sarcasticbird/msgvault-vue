@@ -35,7 +35,7 @@ export function buildEmailSrcdoc(bodyHtml: string, messageId: number): Sanitized
     const src = img.getAttribute('src') || ''
     if (src.startsWith('cid:')) {
       const cid = src.slice(4)
-      img.setAttribute('src', `/api/v1/messages/${messageId}/inline/${encodeURIComponent(cid)}`)
+      img.setAttribute('src', `/api/v1/messages/${messageId}/inline?cid=${encodeURIComponent(cid)}`)
     } else if (src.startsWith('http://') || src.startsWith('https://')) {
       hasExternalImages = true
       img.setAttribute('data-original-src', src)
